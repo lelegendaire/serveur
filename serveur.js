@@ -47,6 +47,7 @@ wss.on('connection', function connection(ws) {
     });
 });
 wss.on('listening', function () {
-    console.log('Serveur WebSocket démarré avec succès sur le port 5500');
+    const address = wss.address();
+    console.log(`Serveur WebSocket démarré avec succès sur le port ${address.port}`);
 });
 
