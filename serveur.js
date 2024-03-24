@@ -6,7 +6,7 @@
 const WebSocket = require('ws');
 
 // Créer un nouveau serveur WebSocket qui écoute sur le port 5500
-const wss = new WebSocket.Server({ port: 5500 });
+const wss = new WebSocket.Server({ port: 3306 });
 
 // Stocker les données de la base de données dans une variable (à des fins de démonstration)
 
