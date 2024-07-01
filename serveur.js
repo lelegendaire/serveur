@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: process.env.PORT || 8080  });
+const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let latestDateTime = null;
 let clientsDateTime = [];
@@ -21,6 +21,12 @@ wss.on('connection', (ws) => {
                 handleSyncData(ws, data);
             } else if (data.action === 'requestSyncData') {
                 requestSyncFromMostRecentClient(ws);
+            } else if (data.action === "firstConnection") {
+                wss.clients.forEach(function each(client) {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send({ action: "sendDate" });
+                    }
+                });
             }
         } catch (error) {
             console.error('Erreur lors de l\'analyse du message:', error);
