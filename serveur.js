@@ -22,12 +22,24 @@ wss.on('connection', (ws) => {
             } else if (data.action === 'requestSyncData') {
                 requestSyncFromMostRecentClient(ws);
             } else if (data.action === "firstConnection") {
-                wss.clients.forEach(function each(client) {
-                    if (client.readyState === WebSocket.OPEN) {
-                 client.send(JSON.stringify({ action: "sendDate" }));
+                // Identifier le client qui a envoyé le message
+    let senderClient = null;
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            // Vérifier si ce client est celui qui a envoyé le message "firstConnection"
+            if (client === ws) {
+                senderClient = client;
+            } else {
+                // Envoyer le message "sendDate" à tous les autres clients
+                client.send(JSON.stringify({ action: "sendDate" }));
+            }
+        }
+    });
 
-                    }
-                });
+    // Si le client qui a envoyé le message est identifié, ne rien faire pour ce client
+    if (senderClient !== null) {
+        // Vous pouvez ajouter un traitement spécial si nécessaire, ou simplement ignorer
+    }
             }
         } catch (error) {
             console.error('Erreur lors de l\'analyse du message:', error);
