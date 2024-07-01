@@ -23,7 +23,7 @@ wss.on('connection', (ws) => {
             } else if (data.action === "firstConnection") {
                 // Identifier le client qui a envoyé le message
                 wss.clients.forEach(function each(client) {
-                    if (client !== sender && client.readyState === WebSocket.OPEN) {                      
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {                      
                         // Envoyer le message "sendDate" à tous les autres clients
                     client.send(JSON.stringify({ action: "sendDate" }));
                         
