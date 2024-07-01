@@ -24,7 +24,8 @@ wss.on('connection', (ws) => {
             } else if (data.action === "firstConnection") {
                 wss.clients.forEach(function each(client) {
                     if (client.readyState === WebSocket.OPEN) {
-                        client.send({ action: "sendDate" });
+                 client.send(JSON.stringify({ action: "sendDate" }));
+
                     }
                 });
             }
