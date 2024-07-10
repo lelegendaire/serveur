@@ -1,4 +1,7 @@
 const WebSocket = require('ws');
+const fs = require('fs');
+const path = require('path');
+
 
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
@@ -15,6 +18,20 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
+             if (data.action === 'create-directory') {
+      const dir = path.join(__dirname, data.dirName);
+      
+      // Créer le répertoire s'il n'existe pas
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+      }
+
+      // Créer un fichier dans le répertoire
+      const filePath = path.join(dir, data.fileName);
+      fs.writeFileSync(filePath, data.content);
+
+      
+    }
             if (data.action === 'clientDateTime') {
                 handleClientDateTime(ws, data);
             } else if (data.action === 'syncData') {
