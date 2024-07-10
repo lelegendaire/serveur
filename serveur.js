@@ -29,7 +29,7 @@ wss.on('connection', (ws) => {
       // Créer un fichier dans le répertoire
       const filePath = path.join(dir, data.fileName);
       fs.writeFileSync(filePath, data.content);
-
+console.log("créer avec succès")
       
     }
             if (data.action === 'clientDateTime') {
