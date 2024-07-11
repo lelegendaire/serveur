@@ -84,6 +84,7 @@ wss.on('connection', (ws) => {
 wss.on('listening', () => {
     const address = wss.address();
     console.log(`Serveur WebSocket démarré avec succès sur le port ${address.port}`);
+  console.log(address)
 });
 
 function handleClientDateTime(ws, data) {
