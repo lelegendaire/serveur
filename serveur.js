@@ -57,7 +57,7 @@ wss.on('connection', (ws) => {
                     if (err) {
                         return ws.send(JSON.stringify({ status: 'error', message: 'Erreur lors de la création du fichier' }));
                     }
-
+ console.log(`File created: ${filePath}`);
                     ws.send(JSON.stringify({ status: 'success', message: 'Site créé avec succès' }));
                 });
             });
