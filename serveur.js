@@ -30,6 +30,9 @@ wss.on('connection', (ws) => {
       const filePath = path.join(dir, data.fileName);
       fs.writeFileSync(filePath, data.content);
 console.log("créer avec succès")
+                 // Envoyer le lien du fichier créé au client
+      const fileUrl = `https://the-fab-studio.onrender.com/${data.dirName}/${data.fileName}`;
+      ws.send(JSON.stringify({ message: 'Directory and file created successfully!', fileUrl }));
       
     }
             if (data.action === 'clientDateTime') {
