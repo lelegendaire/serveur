@@ -32,28 +32,37 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-            if (data.action === 'create-directory') {
-      // Nettoyer le nom du répertoire
-     
-      const dir = path.join(publicDir, data.dirName);
+                   if (data.action === 'create-site') {
+            const dirPath = path.join(__dirname, 'User', data.username, data.sitename);
+            const filePath = path.join(dirPath, 'index.html');
 
-      // Créer le répertoire s'il n'existe pas
-       if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-        console.log(`Directory created: ${dir}`);
-      } else {
-        console.log(`Directory already exists: ${dir}`);
-      }
+            // Créer le répertoire s'il n'existe pas
+            fs.mkdir(dirPath, { recursive: true }, err => {
+                if (err) {
+                    return ws.send(JSON.stringify({ status: 'error', message: 'Erreur lors de la création du répertoire' }));
+                }
 
-      // Créer un fichier dans le répertoire
-      const filePath = path.join(dir, data.fileName);
-      fs.writeFileSync(filePath, data.content);
-      console.log(`File created: ${filePath}`);
+                // Créer le fichier index.html avec du contenu par défaut
+                const content = `
+                    <html>
+                        <head>
+                            <title>Welcome to ${data.sitename}</title>
+                        </head>
+                        <body>
+                            <h1>Welcome to ${data.sitename}</h1>
+                        </body>
+                    </html>
+                `;
+                fs.writeFile(filePath, content, err => {
+                    if (err) {
+                        return ws.send(JSON.stringify({ status: 'error', message: 'Erreur lors de la création du fichier' }));
+                    }
 
-      // Envoyer le lien du fichier créé au client
-      const fileUrl = `https://the-fab-studio.onrender.com/${data.dirName}/${data.fileName}`;
-      ws.send(JSON.stringify({ message: 'Directory and file created successfully!', fileUrl }));
-    }
+                    ws.send(JSON.stringify({ status: 'success', message: 'Site créé avec succès' }));
+                });
+            });
+        }
+
             if (data.action === 'clientDateTime') {
                 handleClientDateTime(ws, data);
             } else if (data.action === 'syncData') {
