@@ -34,12 +34,12 @@ wss.on('connection', (ws) => {
             const data = JSON.parse(message);
             if (data.action === 'create-directory') {
       // Nettoyer le nom du répertoire
-      const cleanDirName = data.dirName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const dir = path.join(publicDir, cleanDirName);
+     
+      const dir = path.join(publicDir, data.dirName);
 
       // Créer le répertoire s'il n'existe pas
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
+       if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
         console.log(`Directory created: ${dir}`);
       } else {
         console.log(`Directory already exists: ${dir}`);
@@ -51,7 +51,7 @@ wss.on('connection', (ws) => {
       console.log(`File created: ${filePath}`);
 
       // Envoyer le lien du fichier créé au client
-      const fileUrl = `https://the-fab-studio.onrender.com/${cleanDirName}/${data.fileName}`;
+      const fileUrl = `https://the-fab-studio.onrender.com/${data.dirName}/${data.fileName}`;
       ws.send(JSON.stringify({ message: 'Directory and file created successfully!', fileUrl }));
     }
             if (data.action === 'clientDateTime') {
