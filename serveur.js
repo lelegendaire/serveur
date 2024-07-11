@@ -1,9 +1,23 @@
 const WebSocket = require('ws');
+const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
+// Configurer le serveur HTTP avec Express
+const app = express();
+const port = process.env.PORT || 8080;
 
-const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
+// Répertoire public pour les fichiers statiques
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
+
+// Démarrer le serveur HTTP
+const server = app.listen(port, () => {
+  console.log(`HTTP server is running on port ${port}`);
+});
+
+// Configurer le serveur WebSocket
+const wss = new WebSocket.Server({ server });
 
 let latestDateTime = null;
 let clientsDateTime = [];
@@ -19,21 +33,24 @@ wss.on('connection', (ws) => {
         try {
             const data = JSON.parse(message);
              if (data.action === 'create-directory') {
-      const dir = path.join(__dirname, data.dirName);
-      
+      const dir = path.join(publicDir, data.dirName);
+
       // Créer le répertoire s'il n'existe pas
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir);
+        console.log(`Directory created: ${dir}`);
+      } else {
+        console.log(`Directory already exists: ${dir}`);
       }
 
       // Créer un fichier dans le répertoire
       const filePath = path.join(dir, data.fileName);
       fs.writeFileSync(filePath, data.content);
-console.log("créer avec succès")
-                 // Envoyer le lien du fichier créé au client
+      console.log(`File created: ${filePath}`);
+
+      // Envoyer le lien du fichier créé au client
       const fileUrl = `https://the-fab-studio.onrender.com/${data.dirName}/${data.fileName}`;
       ws.send(JSON.stringify({ message: 'Directory and file created successfully!', fileUrl }));
-      
     }
             if (data.action === 'clientDateTime') {
                 handleClientDateTime(ws, data);
