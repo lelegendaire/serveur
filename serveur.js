@@ -22,6 +22,9 @@ const wss = new WebSocket.Server({ server });
 let latestDateTime = null;
 let clientsDateTime = [];
 
+// Fichier de stockage des données
+const dataFilePath = path.join(__dirname, 'data.json');
+
 wss.on('connection', (ws) => {
     console.log('Nouvelle connexion WebSocket établie');
 
@@ -32,53 +35,21 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-                   if (data.action === 'create-site') {
-            const dirPath = path.join(__dirname, 'User', data.username, data.sitename);
-            const filePath = path.join(dirPath, 'index.html');
-
-            // Créer le répertoire s'il n'existe pas
-            fs.mkdir(dirPath, { recursive: true }, err => {
-                if (err) {
-                    return ws.send(JSON.stringify({ status: 'error', message: 'Erreur lors de la création du répertoire' }));
-                }
-
-                // Créer le fichier index.html avec du contenu par défaut
-                const content = `
-                    <html>
-                        <head>
-                            <title>Welcome to ${data.sitename}</title>
-                        </head>
-                        <body>
-                            <h1>Welcome to ${data.sitename}</h1>
-                        </body>
-                    </html>
-                `;
-                fs.writeFile(filePath, content, err => {
-                    if (err) {
-                        return ws.send(JSON.stringify({ status: 'error', message: 'Erreur lors de la création du fichier' }));
-                    }
- console.log(`File created: ${filePath}`);
-                    ws.send(JSON.stringify({ status: 'success', message: 'Site créé avec succès' }));
-                });
-            });
-        }
-
+            
             if (data.action === 'clientDateTime') {
                 handleClientDateTime(ws, data);
             } else if (data.action === 'syncData') {
                 handleSyncData(ws, data);
-           
+            } else if (data.action === 'saveData') {
+                saveDataToServer(data.storeName, data.data);
+            } else if (data.action === 'getData') {
+                getDataFromServer(ws);
             } else if (data.action === "firstConnection") {
-                // Identifier le client qui a envoyé le message
                 wss.clients.forEach(function each(client) {
                     if (client !== ws && client.readyState === WebSocket.OPEN) {                      
-                        // Envoyer le message "sendDate" à tous les autres clients
-                    client.send(JSON.stringify({ action: "sendDate" }));
-                        
+                        client.send(JSON.stringify({ action: "sendDate" }));
                     }
                 });
-
-              
             }
         } catch (error) {
             console.error('Erreur lors de l\'analyse du message:', error);
@@ -93,7 +64,6 @@ wss.on('connection', (ws) => {
 wss.on('listening', () => {
     const address = wss.address();
     console.log(`Serveur WebSocket démarré avec succès sur le port ${address.port}`);
-  console.log(address)
 });
 
 function handleClientDateTime(ws, data) {
@@ -109,10 +79,30 @@ function handleClientDateTime(ws, data) {
 
 function handleSyncData(ws, data) {
     const { storeName, data: syncData } = data;
+    saveDataToServer(storeName, syncData);
     broadcastToClientsExcept(ws, { action: "syncData", storeName: storeName, data: syncData });
 }
 
+function saveDataToServer(storeName, data) {
+    let storedData = {};
+    if (fs.existsSync(dataFilePath)) {
+        storedData = JSON.parse(fs.readFileSync(dataFilePath));
+    }
+    storedData[storeName] = data;
+    fs.writeFileSync(dataFilePath, JSON.stringify(storedData));
+    console.log(`Données sauvegardées pour le store: ${storeName}`);
+}
 
+function getDataFromServer(ws) {
+    if (fs.existsSync(dataFilePath)) {
+        const storedData = JSON.parse(fs.readFileSync(dataFilePath));
+        for (const [storeName, data] of Object.entries(storedData)) {
+            ws.send(JSON.stringify({ action: "syncData", storeName: storeName, data: data }));
+        }
+    } else {
+        ws.send(JSON.stringify({ action: "syncData", storeName: "", data: [] }));
+    }
+}
 
 function broadcastToClients(message) {
     const messageString = JSON.stringify(message);
@@ -122,6 +112,7 @@ function broadcastToClients(message) {
         }
     });
 }
+
 function broadcastToClientsExcept(sender, message) {
     const messageString = JSON.stringify(message);
     wss.clients.forEach((client) => {
